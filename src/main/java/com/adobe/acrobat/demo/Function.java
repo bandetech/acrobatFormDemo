@@ -12,6 +12,7 @@ import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,6 +35,7 @@ public class Function {
                 authLevel = AuthorizationLevel.ANONYMOUS)
                 HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
+       
         context.getLogger().info("Java HTTP trigger processed a request.");
 
         // Check request body
@@ -46,9 +48,14 @@ public class Function {
             final String body = request.getBody().get();
             CheckSheet sheet = new CheckSheet();
             try{
+                // Parse Form XML data and store CheckSheet object.
                 convertXmlDataToCheckSheet(body, sheet);
-                URL confirmPdf = Function.class.getClassLoader().getResource("Confirmed.pdf");
-                byte[] pdfContent = Files.readAllBytes(Paths.get(confirmPdf.toURI()));
+                System.out.println("Sheet Converted...");
+                InputStream inputStream = Function.class.getResourceAsStream("/Confirmed.pdf");
+
+                byte[] pdfContent = inputStream.readAllBytes();
+                System.out.println("Read Confirm.pdf...");
+                
                 return request.createResponseBuilder(HttpStatus.OK)
                 .header("Content-Type", "application/pdf")
                 .header("Content-Disposition", "attachment; filename=\"Confirmed.pdf\"")
